@@ -33,6 +33,7 @@ LOGIN_URL = 'FregatMonitoringApp:login'
 
 INSTALLED_APPS = [
     'FregatMonitoringApp.apps.FregatmonitoringappConfig',
+    'SPR.apps.SprConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -101,10 +102,21 @@ DATABASES = {
         'OPTIONS': {
             'driver': 'SQL Server Native Client 11.0'
         }
+    },
+    'SPR': {
+        'ENGINE': 'sql_server.pyodbc',
+        'HOST': "FRGV202X\PRODUCTION",
+        'USER': "Operator",
+        'PASSWORD': "fregat",
+        'NAME': "SPR",
+        'PORT': "",
+        'OPTIONS': {
+            'driver': 'SQL Server Native Client 11.0'
+        }
     }
 }
 
-DATABASE_ROUTERS = ['FregatMonitoringApp.routers.FregatMonitoringAppRouter']
+DATABASE_ROUTERS = ['SPR.routers.SPRRouter', 'FregatMonitoringApp.routers.FregatMonitoringAppRouter']
 
 
 # Password validation
