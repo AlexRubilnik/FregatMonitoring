@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "frgs005x", "192.168.88.238", "frgv006a", "192.168.88.234", "frgv008a", 'frgv008a.fregat.local', 'frgv006a.fregat.local', '10.112.1.2', '10.112.1.234']
 
-LOGIN_URL = 'FregatMonitoringApp:login'
+LOGIN_URL = 'SPR:login'
 
 # Application definition
 

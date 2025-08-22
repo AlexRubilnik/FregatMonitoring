@@ -15,24 +15,24 @@
 <div class="header-bgd"> <!-- Header-->
        <table width="100%">
        <tr style="height:20px">
-          <td class="header-brand">ООО "Фрегат"</td>
-          <td class="orange-text cursive">Cloud monitoring service</td>  
-          <td class="white-text">Сервис дистанционного мониторинга и управления</td>
+          <td><img class="brand-icon" src="{% static 'SPR/images/frg1aklogo.png' %}" ></img></td>
+          <td class="black-text cursive">Cloud monitoring service</td>  
+          <td class="blak-text">Сервис дистанционного мониторинга и управления</td>
           <td><div>
             <table width="100%"> 
             <tr>
                <td><table>
                  <tr>
-                   <td class="white-text" style="font-size: 14px"> Пользователь: </td>
+                   <td class="black-text" style="font-size: 14px"> Пользователь: </td>
 
-                   <td class="white-text" style="font-size: 12px"> {{user}}     </td>
+                   <td class="black-text" style="font-size: 12px"> {{user}}     </td>
                  </tr>
                  <tr>
                    <td width=100рх> </td>
                    {% if user.is_authenticated %}
-                   <td style="font-size: 12px"><a href="{% url 'FregatMonitoringApp:logout' %}" class="white-text"><i><u>Выйти</u></i></a></td>
+                   <td style="font-size: 12px"><a href="{% url 'FregatMonitoringApp:logout' %}" class="black-text"><i><u>Выйти</u></i></a></td>
                    {% else%}
-                   <td style="font-size: 12px"><a href="{% url 'FregatMonitoringApp:login' %}" class="white-text"><i><u>Войти</u></i></a></td>
+                   <td style="font-size: 12px"><a href="{% url 'FregatMonitoringApp:login' %}" class="black-text"><i><u>Войти</u></i></a></td>
                    {% endif %}
                  </tr>
                     </table>

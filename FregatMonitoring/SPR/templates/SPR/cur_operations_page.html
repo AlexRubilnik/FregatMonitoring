@@ -1,0 +1,21 @@
+{% extends "SPR/base.html" %}
+
+{% block cur_operations_page_scripts %}
+ <link href="https://unpkg.com/tabulator-tables/dist/css/tabulator_simple.min.css" rel="stylesheet">
+ <script type="text/javascript" src="https://unpkg.com/tabulator-tables/dist/js/tabulator.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+{% load static %}
+{% endblock %}
+
+{% block cur_operations_page %}
+<div class="content-box">
+  <div style="text-align: left"><b>Работник:</b><span id="user_staff"><br> {{user_staff.name}} {{user_staff.surname}}</span>  <span id="user_position"> {{user_staff.position.name}}</span>  </div>
+  <div style="text-align: left"><span id="user_service">Служба: {{user_staff.position.service.name}}</span></div>
+  <div style="text-align: left"><span id="data-download-marker" hidden=true> Подождите. Идёт загрузка данных </span><span id="ddm1" hidden=true>.</span><span id="ddm2" hidden=true>.</span><span id="ddm3" hidden=true>.</span></div>
+  <div id="cur-operations-block" style="position: absolute;"> 
+    <div id="cur-operations-table" style="max-height: 750px; max-width: 1650px;"></div>
+  </div>    
+   
+  <script src="{% static 'SPR/scripts/cur_operations_page.js' %}"> </script>
+</div>
+{% endblock %}

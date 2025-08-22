@@ -1,9 +1,16 @@
-{% extends 'FregatMonitoringApp/base.html' %}
+{% load static %}
+
+<html>
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <link rel="stylesheet" type="text/css" href="{% static 'SPR/style.css' %}">
+</head>
+<body>
 
 {% block login %}
 <div class="login-div">
 	<form method="post" class="login-form" novalidate>
 	  	{% csrf_token %}
+		<h1 style="text-align: center;"><img class="brand-icon" align='center' src="{% static 'SPR/images/frg1aklogo.png' %}" ></img></h1>
 	    <h1 style="text-align: center; margin-bottom: 30px;">Вход</h1>
 		<p><label class='login-tag' for="id_username">Имя пользователя:</label></p>
 		<p><input class='login-tag' type="text" name="username" autofocus="" autocapitalize="none" autocomplete="username" maxlength="150" required="" id="id_username"></p>
@@ -14,3 +21,6 @@
 </div>
 
 {% endblock login %}
+
+</body>
+</html>

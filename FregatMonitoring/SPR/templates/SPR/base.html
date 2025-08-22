@@ -1,0 +1,60 @@
+{% load static %}
+
+<html>
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <link rel="stylesheet" type="text/css" href="{% static 'SPR/style.css' %}">
+      {% block cur_operations_page_scripts %}{% endblock %}
+      {% block full_operations_list_scripts %}{% endblock %}
+
+</head>
+<body>
+
+<div class="header-bgd"> <!-- Header-->
+       <table width="100%">
+       <tr style="height:20px">s
+          <td><img class="brand-icon" src="{% static 'SPR/images/frg1aklogo.png' %}" ></img></td>
+          <td class="black-text">Сервис технического обслуживания оборудования</td>  
+          <td><div>
+            <table width="100%"> 
+            <tr>
+               <td><table>
+                 <tr>
+                   <td class="black-text" style="font-size: 14px"> Пользователь: </td>
+
+                   <td class="black-text" style="font-size: 12px"> {{user}}     </td>
+                 </tr>
+                 <tr>
+                   <td width=100рх> </td>
+                   {% if user.is_authenticated %}
+                   <td style="font-size: 12px"><a href="{% url 'SPR:logout' %}" class="black-text"><i><u>Выйти</u></i></a></td>
+                   {% else%}
+                   <td style="font-size: 12px"><a href="{% url 'SPR:login' %}" class="black-text"><i><u>Войти</u></i></a></td>
+                   {% endif %}
+                 </tr>
+                    </table>
+               </td>
+            </tr>  
+            <td>
+               <td><table> 
+                  <tr class="white-text">
+                  </tr>    
+                   </table> 
+               </td>
+            </tr>
+            </table>
+            </div>
+          </td>
+       </tr>
+       </table>
+</div>
+<div class="main_container">  <!-- Содержимое полностью-->
+  {% block login %}{% endblock %}
+  <div class="current_scr_container">
+    <input id='curScr' type='hidden' value='monitor_scr'>   
+    {% block full_operations_list %}{% endblock %}
+    {% block cur_operations_page %}{% endblock %}
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,3 +1,7 @@
+.columns_12px{
+   font-size: 12px;
+}
+
 .auto-melts-types-box{
     overflow-y: auto;
     height: 700px;
@@ -43,8 +47,8 @@
     border-bottom-width: 0;
     border-left-width: 1px;
     border-right-width: 0;
-    padding-left: 40px;
-    margin-left: 200px;
+    padding-left: 10px;
+    margin-left: 0px;
     width: 100%;
 }
 .content-page-header{
@@ -66,6 +70,10 @@
     margin-right: 10px;
     text-align: -webkit-center;
     overflow: hidden;
+}
+
+#cur-operations-block{
+    margin-top: 20px;
 }
 
 .furnace-info-tab{
@@ -140,13 +148,12 @@
 }
 
 .header-bgd{
-    height:60px; 
     margin-left:-15px; 
     padding-bottom:0px; 
     padding-top:0px; 
     margin-right:-15px; 
     margin-top:-15px; 
-    margin-bottom:60px; 
+    margin-bottom:10px; 
     background-color:#e2e2e2; 
     box-shadow:  0 0 20px rgba(0,0,0,0.8);
     position: fixed;
@@ -211,7 +218,7 @@
 .main_container{
     width: 100%;
     position: fixed;
-    top: 120px;
+    top: 80px;
 
 }
 .melt_step_container{
@@ -275,7 +282,6 @@
 }
 
 .top_menu_bar{
-    left: 0px;
     justify-content: center;
     display: flex;
     position: fixed;
@@ -286,7 +292,7 @@
     width: 500px; /* Ширина */
     height: 40px;
     /*display: inline-block;  Строчно-блочный элемент */
-    box-shadow:  0 6px 3px 0px rgb(209 203 203 / 80%);
+    box-shadow:  0 6px 3px 0px rgba(0,0,0,0.8);
     margin-left: 0px;
     border-bottom-right-radius: 40px;
 
@@ -294,7 +300,7 @@
 
 .top_menu_btn
     {
-    background-color: #0043971c;
+    background-color: #696969;
     background-image: none;
     border-bottom-color: #696969;
     border-bottom-left-radius: 0px;
@@ -318,7 +324,7 @@
     border-top-style: solid;
     border-top-width: 1px;
     box-sizing: border-box;
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     cursor: pointer;
     display: inline-block;
     font-family:    Helvetica,Arial,sans-serif;
@@ -337,7 +343,7 @@
     padding-top: 3px;
     text-align: center;
     text-decoration: none;
-    text-decoration-color: rgb(0, 0, 0);
+    text-decoration-color: rgb(255, 255, 255);
     text-decoration-line: none;
     text-decoration-style: solid;
     vertical-align: middle;
@@ -350,7 +356,8 @@
     user-select: none;
 }
 
-.btn{
+.btn,
+#work_start_btn{
     border-radius: 4px;
     background-color: #696969;
     color: rgb(255, 255, 255);
