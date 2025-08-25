@@ -357,7 +357,9 @@
 }
 
 .btn,
-#work_start_btn{
+#work_start_btn,
+#week_minus,
+#week_plus{
     border-radius: 4px;
     background-color: #696969;
     color: rgb(255, 255, 255);
@@ -424,4 +426,9 @@
 
 .device-tab{
     border-bottom: 1px dashed #ecedee;
+}
+
+#week{
+    padding-left: 10px;
+    padding-right: 10px;
 }

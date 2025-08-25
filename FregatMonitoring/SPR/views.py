@@ -49,9 +49,18 @@ def full_operations_page(request):
 @login_required
 def cur_operations_page(request):
     '''Отображует страницу со списком работ, запланированных для данного пользователя на эту неделю'''
+    cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
+    if cur_day != 1:
+        start_cur_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1)  
+    else:
+        start_cur_week_date = datetime.datetime.now()
+    finish_cur_week_date = start_cur_week_date + datetime.timedelta(days = 6)
     staff = getRepairStaff_by_user(request.user)
     template = loader.get_template('SPR/cur_operations_page.html')
-    context={'user_staff': staff}
+    context={'user_staff': staff,
+             'week': cur_week,
+             'start_date': start_cur_week_date.strftime('%d.%m.%Y'),
+             'finish_date': finish_cur_week_date.strftime('%d.%m.%Y')}
     return HttpResponse(template.render(context, request))
 
 
@@ -99,20 +108,20 @@ def full_operations_list_update(request):
 
 
 @login_required
-def cur_operations_list_update(request):
+def cur_operations_list_update(request, week):
     '''Загружает задания по графику ППР для данного пользователя на текущую неделю'''
     
     cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
+    delta_week = cur_week - int(week) 
     if cur_day != 1:
-        start_cur_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1)  
+        start_cur_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1-(delta_week*7))  
     else:
-        start_cur_week_date = datetime.datetime.now()
-
+        start_cur_week_date = datetime.datetime.now() - datetime.timedelta(days = delta_week*7) 
     finish_cur_week_date = start_cur_week_date + datetime.timedelta(days = 6)
     operations = Repair_schedule.objects.all()
 
     for operation in operations: 
-        op = getattr(operation, f'_{cur_week}')
+        op = getattr(operation, f'_{week}')
         if op ==1 : #ищем работы, которые нужно запланировать на эту неделю
             if len(Scheduled_operations.objects.filter(operation=operation.operation, start_date=start_cur_week_date)) == 0: #если работы ещё нет в запланированных
                 sch_op = Scheduled_operations(operation=operation.operation, start_date=start_cur_week_date, finish_date=finish_cur_week_date) #создаём экземпляр в запланированных работах

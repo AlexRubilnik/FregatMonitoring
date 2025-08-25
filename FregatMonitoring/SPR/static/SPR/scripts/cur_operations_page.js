@@ -1,13 +1,85 @@
 var marker_run = false;
 
+cur_staff = document.getElementById("user_position").innerText; //должность пользователя
+cur_staff_=cur_staff.replaceAll(' ', '').replaceAll('\n', '') //без пробелов
+
+if (cur_staff_ == 'СлесарьКИПиА'){
+  document.getElementById('week_minus').style.display="none";
+  document.getElementById('week_plus').style.display="none";
+}
+
+function btn_week_minus(){
+  cur_week = document.getElementById('week').innerText;
+  if( cur_week>1){
+    document.getElementById('week').innerText = String(Number(cur_week)-1);
+    let st_d = document.getElementById('start_date').innerText;
+    let new_st_d = new Date(st_d.slice(-4,) +"-"+st_d.slice(3,5)+"-"+st_d.slice(0,2));
+    new_st_d.setDate(new_st_d.getDate()  - 7);
+    let f_d = document.getElementById('finish_date').innerText;
+    let new_f_d= new Date(f_d.slice(-4,) +"-"+f_d.slice(3,5)+"-"+f_d.slice(0,2));
+    new_f_d.setDate(new_f_d.getDate()  - 7);
+    let st_d_d_0 ="";
+    let st_d_m_0 ="";
+    let f_d_d_0 ="";
+    let f_d_m_0 ="";
+    if(new_st_d.getDate()<10){
+      st_d_d_0 = "0"
+    } 
+    if(new_st_d.getMonth()<9){
+      st_d_m_0 = "0"
+    } 
+    if(new_f_d.getDate()<10){
+      f_d_d_0 = "0"
+    } 
+    if(new_f_d.getMonth()<9){
+      f_d_m_0 = "0"
+    } 
+    document.getElementById('start_date').innerText =  st_d_d_0 + new_st_d.getDate()+"."+st_d_m_0+String(Number(new_st_d.getMonth())+1)+"."+new_st_d.getFullYear();
+    document.getElementById('finish_date').innerText =  f_d_d_0 + new_f_d.getDate()+"."+f_d_m_0+String(Number(new_f_d.getMonth())+1)+"."+new_f_d.getFullYear();
+    cur_operations_list_update();
+  }
+}
+function btn_week_plus(){
+  cur_week = document.getElementById('week').innerText;
+  if(cur_week < 52){
+    document.getElementById('week').innerText = String(Number(cur_week)+1);
+    let st_d = document.getElementById('start_date').innerText;
+    let new_st_d = new Date(st_d.slice(-4,) +"-"+st_d.slice(3,5)+"-"+st_d.slice(0,2));
+    new_st_d.setDate(new_st_d.getDate()  + 7);
+    let f_d = document.getElementById('finish_date').innerText;
+    let new_f_d= new Date(f_d.slice(-4,) +"-"+f_d.slice(3,5)+"-"+f_d.slice(0,2));
+    new_f_d.setDate(new_f_d.getDate()  + 7);
+    let st_d_d_0 ="";
+    let st_d_m_0 ="";
+    let f_d_d_0 ="";
+    let f_d_m_0 ="";
+    if(new_st_d.getDate()<10){
+      st_d_d_0 = "0"
+    } 
+    if(new_st_d.getMonth()<9){
+      st_d_m_0 = "0"
+    } 
+    if(new_f_d.getDate()<10){
+      f_d_d_0 = "0"
+    } 
+    if(new_f_d.getMonth()<9){
+      f_d_m_0 = "0"
+    } 
+    document.getElementById('start_date').innerText =  st_d_d_0 + new_st_d.getDate()+"."+st_d_m_0+String(Number(new_st_d.getMonth())+1)+"."+new_st_d.getFullYear();
+    document.getElementById('finish_date').innerText =  f_d_d_0 + new_f_d.getDate()+"."+f_d_m_0+String(Number(new_f_d.getMonth())+1)+"."+new_f_d.getFullYear();
+    cur_operations_list_update();
+  }  
+}
+
 
 function cur_operations_list_update(){ 
+  week = Number(document.getElementById('week').innerText);
   data_download_marker_on_off(false); //Показываем маркер "Подождите. Идёт загрузка данных..."
   marker_run=true; //Запускаем бегущий маркер
   charts_tables_on_off(true); //Убираем таблицы и графики
  
   var XHR = new XMLHttpRequest()
-      request_str = "/SPR/cur_operations_list_update/";
+      request_str = "/SPR/cur_operations_list_update/"+String(week)+"/";    
       let q_flag = false;
 
       XHR.open('GET', request_str, true);
@@ -300,4 +372,6 @@ function RenderLog(TableData){
   return table
 } //RenderTable
 
+document.getElementById('week_minus').onclick=btn_week_minus;
+document.getElementById('week_plus').onclick=btn_week_plus;
 table = cur_operations_list_update()
