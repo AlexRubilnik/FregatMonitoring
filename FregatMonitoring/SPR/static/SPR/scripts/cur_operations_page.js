@@ -184,7 +184,7 @@ function charts_tables_on_off(hidden){ //Прячет содержимое ст�
   var hidden_t = "1"
   if (hidden) {hidden_t="0"}
   try{
-      document.getElementById("cur-operations-table-block").style['opacity'] = hidden_t
+      document.getElementById("cur-operations-block").style['opacity'] = hidden_t
   } catch {}
 }
 
@@ -301,7 +301,7 @@ function RenderLog(TableData){
         cancel_btn="";
       }
       else if(stat == 3){ //Просрочена
-        btn = "Просрочена"
+        btn = ""
         cancel_btn="";
       }
 

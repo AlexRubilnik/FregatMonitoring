@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
+from django.db.models import Q
 
 from django.http import HttpResponse, JsonResponse
 from .models import Locations, Equipment, Nodes, Sections, Works, Staff_positions, Repair_staff, Repair_schedule, Scheduled_operations
@@ -67,6 +68,7 @@ def cur_operations_page(request):
 @login_required
 def full_operations_list_update(request):
     '''Загружает весь график ППР'''
+    cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
     works = Works.objects.all()
 
     full_eqp_list = []
@@ -78,7 +80,7 @@ def full_operations_list_update(request):
         staff_pos = Staff_positions.objects.get(id=work.staff_position.id)
         week_cols=dict()
         try:
-            weeks = Repair_schedule.objects.get(operation=work)
+            weeks = Repair_schedule.objects.get(operation=work) 
             for i in range(1, 53): 
                 week = getattr(weeks, f'_{i}')
                 if  week == 2:
@@ -114,20 +116,32 @@ def cur_operations_list_update(request, week):
     cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
     delta_week = cur_week - int(week) 
     if cur_day != 1:
-        start_cur_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1-(delta_week*7))  
+        start_cur_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1)  #текущая неделя
+        start_asked_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1+(delta_week*7))  #неделя, которую смотрит пользователь
     else:
-        start_cur_week_date = datetime.datetime.now() - datetime.timedelta(days = delta_week*7) 
-    finish_cur_week_date = start_cur_week_date + datetime.timedelta(days = 6)
-    operations = Repair_schedule.objects.all()
+        start_cur_week_date = datetime.datetime.now()
+        start_asked_week_date = datetime.datetime.now() - datetime.timedelta(days = delta_week*7) 
+    finish_cur_week_date = start_cur_week_date + datetime.timedelta(days = 6)    
+    finish_asked_week_date = start_asked_week_date + datetime.timedelta(days = 6)
 
+    start_cur_year = Q(start_date__gte=f'{cur_year-1}-12-25')
+    finish_last_week = Q(finish_date__lt=start_cur_week_date)
+    expired = Q(current_status=0)
+    #Запрашиваем все просроченныеопераии за все недели этого года, предшествующие текущей
+    last_operations=Scheduled_operations.objects.filter(start_cur_year & finish_last_week & expired) #Все пророченные работы по графику ППР, запланированные на предыдущие недели этого года
+    for op in last_operations:
+        op.current_status = 3   #Если у операции стоит статус 0(ожидает выполнения), меняем статус на "просрочена"
+        op.save()
+
+    operations = Repair_schedule.objects.all()
     for operation in operations: 
         op = getattr(operation, f'_{week}')
-        if op ==1 : #ищем работы, которые нужно запланировать на эту неделю
-            if len(Scheduled_operations.objects.filter(operation=operation.operation, start_date=start_cur_week_date)) == 0: #если работы ещё нет в запланированных
-                sch_op = Scheduled_operations(operation=operation.operation, start_date=start_cur_week_date, finish_date=finish_cur_week_date) #создаём экземпляр в запланированных работах
+        if op ==1 : #ищем работы, которые нужно запланировать на запрашиваемую пользователем неделю
+            if len(Scheduled_operations.objects.filter(operation=operation.operation, start_date=start_asked_week_date)) == 0: #если работы ещё нет в запланированных
+                sch_op = Scheduled_operations(operation=operation.operation, start_date=start_asked_week_date, finish_date=finish_asked_week_date) #создаём экземпляр в запланированных работах
                 sch_op.save()
             else:
-                sch_op = Scheduled_operations.objects.get(operation=operation.operation, start_date=start_cur_week_date)
+                sch_op = Scheduled_operations.objects.get(operation=operation.operation, start_date=start_asked_week_date)
                 if sch_op.current_status == 1: #если выполняется
                     print(sch_op.start_timestamp)
                     print(datetime.datetime.now(timezone.utc))
@@ -135,8 +149,7 @@ def cur_operations_list_update(request, week):
                     sch_op.elapsed_time_min = elapsed_time
                     sch_op.save()
 
-
-    sch_operations = Scheduled_operations.objects.filter(start_date = start_cur_week_date) #Все работы по графику ППР, запланированные на эту неделю
+    sch_operations = Scheduled_operations.objects.filter(start_date = start_asked_week_date) #Все работы по графику ППР, запланированные на просматриваемую пользователем неделю
     full_eqp_list = []
     for op in sch_operations:
         work = op.operation
