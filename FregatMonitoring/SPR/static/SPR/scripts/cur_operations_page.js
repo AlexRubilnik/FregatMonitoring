@@ -112,10 +112,10 @@ function cur_operations_list_update(){
      
 }
 
-function update_operation_status(sch_op_id, status){ 
+function update_operation_status(sch_op_id, week, status){ 
 
     var XHR = new XMLHttpRequest()
-    request_str = "/SPR/update_operation_status/"+sch_op_id+"/"+status+"/";
+    request_str = "/SPR/update_operation_status/"+sch_op_id+"/"+week+"/"+status+"/";
     XHR.open('GET', request_str, true);
     XHR.send();
     let upd_status = undefined;
@@ -191,12 +191,13 @@ function charts_tables_on_off(hidden){ //Прячет содержимое ст�
 
 var start_btn = function(e, cell){
     staff = document.getElementById("user_staff").innerText;
+    week = Number(document.getElementById("week").innerText);
     cur_status = cell.getValue();
     if(cur_status=="<btn name='work_start_btn' id='work_start_btn'>Начать операцию</btn>"){
         start_operation = confirm("Подтвердите, что хотите начать обслуживание")
         if (start_operation){
             sch_op_id = cell.getRow().getCells()[0].getValue()
-            update_operation_status(sch_op_id, 'start')
+            update_operation_status(sch_op_id, week, 'start')
             cell.setValue("<btn name='work_start_btn' id='work_start_btn'>Завершить операцию</btn>");
             cell.getRow().getCell('cancel').setValue("<btn name='work_start_btn' id='work_start_btn'>Отказаться</btn>");
             cell.getRow().getCell('cur_status').setValue("<p style='color: black;'>Выполняет: </p>"+ staff);
@@ -206,7 +207,7 @@ var start_btn = function(e, cell){
         start_operation = confirm("Подтвердите, что хотите закончить обслуживание")
         if (start_operation){
             sch_op_id = cell.getRow().getCells()[0].getValue()
-            update_operation_status(sch_op_id, 'finish')
+            update_operation_status(sch_op_id, week, 'finish')
             cell.setValue("");
             cell.getRow().getCell('cancel').setValue("")
             cell.getRow().getCell('cur_status').setValue(cur_status="<p style='color: green;'>Выполнил: </p>"+ staff);
@@ -216,10 +217,11 @@ var start_btn = function(e, cell){
 }
 
 var cancel_btn = function(e, cell){
+    week = Number(document.getElementById("week").innerText);
     stop_operation = confirm("Подтвердите, что хотите отменить обслуживание")
         if (stop_operation){
             sch_op_id = cell.getRow().getCells()[0].getValue();
-            update_operation_status(sch_op_id, 'cancel');
+            update_operation_status(sch_op_id, week, 'cancel');
             cell.setValue("");
             cell.getRow().getCell('start').setValue("<btn name='work_start_btn' id='work_start_btn'>Начать операцию</btn>");
             cell.getRow().getCell('cur_status').setValue("<p style='color: orange;'>Ожидает выполнения</p>");

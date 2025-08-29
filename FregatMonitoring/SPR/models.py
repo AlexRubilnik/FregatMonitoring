@@ -95,6 +95,16 @@ class Repair_schedule(models.Model):
         db_table = 'Repair_schedule'
 
 
+class Repair_schedule_fact(models.Model):
+    operation = models.OneToOneField(Works, primary_key=True, on_delete=models.CASCADE, default=1)
+    for i in range(1, 53):
+        exec(f"_{i} = models.IntegerField(null=False, default=0)")
+
+
+    class Meta:
+        db_table = 'Fact_repair_schedule'
+
+
 class Scheduled_operations(models.Model):
    id = models.AutoField(primary_key=True)
    operation = models.ForeignKey(Works, on_delete=models.CASCADE)

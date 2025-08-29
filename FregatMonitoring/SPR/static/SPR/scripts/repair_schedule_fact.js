@@ -7,7 +7,7 @@ function full_operations_list_update(){
   charts_tables_on_off(true); //Убираем таблицы и графики
  
   var XHR = new XMLHttpRequest()
-      request_str = "/SPR/full_operations_list_update/mix/";
+      request_str = "/SPR/full_operations_list_update/";
       let q_flag = false;
 
       XHR.open('GET', request_str, true);
@@ -40,6 +40,13 @@ function full_operations_list_update(){
      
 }
 
+function sleep(milliseconds) {
+  const date = Date.now();
+  let currentDate = null;
+  do {
+    currentDate = Date.now();
+  } while (currentDate - date < milliseconds);
+}
 
 function update_repair_operation_data(work_id, field, new_data){ 
 
@@ -171,21 +178,23 @@ function RenderLog(TableData){
     return input;
   };
 
-  let week_cols = Array();
-
-  function paramLookup(cell){
-    //cell - the cell component
-    c = cell.getElement()
-    c.style.padding = "0px";
-    c.style.objectFit = "fill"
-    cell.getRow().getElement().style.borderBottomColor = "black";
-    //do some processing and return the param object
-    return {
-            urlPrefix:"http://frgv006a:8000/static/SPR/images/",
-            urlSuffix:".png"};
+  function weeks_editor(cell){
+    if(cell.getValue()=="white"){
+      cell.setValue("yellow");
+    } else {
+      cell.setValue("white");
+    }
   }
+
+  let week_cols = Array();
   for(let i=0; i<52; i++){
-    week_cols.push({title:(i+1).toString(), field:"_"+(i+1).toString(), width:5, formatter:"image",  headerSort:false, formatterParams:paramLookup})
+    week_cols.push({title:"_"+(i+1).toString(), field:"_"+(i+1).toString(), width:5, formatter:"color",
+                    cellClick:function(e, cell){
+                      //e - the click event object
+                      //cell - cell component
+                      weeks_editor(cell);
+                   },
+                   headerSort:false})
   }
   
   var table = new Tabulator("#full-operations-table", {
@@ -228,20 +237,46 @@ function RenderLog(TableData){
     col_name = cell.getColumn().getField()
     var row_id = cell.getRow().getCells()[0].getValue() //получаем id операции
     update_repair_operation_data(row_id, col_name, cell.getValue());
-  });
-
-  table.on("dataProcessed", function(){
-    rows = table.getRows()
-    for(let i=0; i < rows.length; i++){
-      cells = rows[i].getCells();
-      for(let j=0; j < cells.length; j++){
-        if (cells[j].getColumn().getField()[0] == '_'){
-          cells[j].getElement().style.objectFit = "fill";
+    let fill_with_per = false; 
+    if (col_name[0] == '_'){ //один из недельных столбцов
+      let cells = cell.getRow().getCells();
+      let week_firs_indх=0;
+      for(let i=0; i < cells.length; i++){
+        if(cells[i].getColumn().getField()[0] == '_'){//индех первой ячейки с неделями
+          week_firs_indх = i
+          break;
         }
+      } 
+      for(let i=week_firs_indх; i < cells.length; i++){ //проверяем все недельные ячейки, кроме текущей. Если все они пустые - предлагаем заполнить
+        if (cells[i].getValue() == "yellow" && cells[i] != cell){
+          break;
+        }
+        if (i == cells.length-1){
+          fill_with_per = confirm('Заполнить в соответствие с периодичностью?'); 
+        }
+      }
+      
+    };
+    if (fill_with_per){
+      week = col_name.slice(1) //номер недели
+      let cells = cell.getRow().getCells();
+      for(let i=0; i < cells.length; i++){
+        if (cells[i].getColumn().getField() == "per"){
+          per = cells[i].getValue()
+        }
+        if (cells[i] == cell){ //текущая ячейка
+          cur_cell_indx = i;
+          break;
+        }
+      }
+      h = Math.floor(per/7)
+      for (let i=cur_cell_indx+h; i < cells.length; i=i+h){
+        cells[i].setValue("yellow");
+        col_name = cell.getColumn().getField()
+        sleep(70)
       }
     }
   });
-
   return table
 } //RenderTable
 

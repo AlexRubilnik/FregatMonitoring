@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.db.models import Q
 
 from django.http import HttpResponse, JsonResponse
-from .models import Locations, Equipment, Nodes, Sections, Works, Staff_positions, Repair_staff, Repair_schedule, Scheduled_operations
+from .models import Locations, Equipment, Nodes, Sections, Works, Staff_positions, Repair_staff, Repair_schedule, Repair_schedule_fact, Scheduled_operations
 
 
 def getRepairStaff_by_user(user):
@@ -66,7 +66,7 @@ def cur_operations_page(request):
 
 
 @login_required
-def full_operations_list_update(request):
+def full_operations_list_update(request, mode):
     '''Загружает весь график ППР'''
     cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
     works = Works.objects.all()
@@ -78,21 +78,49 @@ def full_operations_list_update(request):
         eqp = Equipment.objects.get(id=sect.equipment.id)
         loc = Locations.objects.get(id=eqp.location.id)
         staff_pos = Staff_positions.objects.get(id=work.staff_position.id)
-        week_cols=dict()
+        week_cols_plan=dict()
+        week_cols_fact=dict()
+        week_cols_mix=dict()
         try:
-            weeks = Repair_schedule.objects.get(operation=work) 
+            weeks_plan = Repair_schedule.objects.get(operation=work) 
+            weeks_fact = Repair_schedule_fact.objects.get(operation=work) 
             for i in range(1, 53): 
-                week = getattr(weeks, f'_{i}')
-                if  week == 2:
-                    week_cols[f'_{i}'] = 'green'
-                elif  week == 1:
-                    week_cols[f'_{i}'] = 'yellow'
-                else:
-                    week_cols[f'_{i}'] = 'white'
+                week_plan = getattr(weeks_plan, f'_{i}')
+                week_fact = getattr(weeks_fact, f'_{i}')
+                if mode =='plan':
+                    if  week_plan == 1:
+                        week_cols_plan[f'_{i}'] = 'yellow'
+                    else:
+                        week_cols_plan[f'_{i}'] = 'white'
+                if mode == 'mix':
+                    if week_plan == 1: 
+                        wp = "y"
+                    else:
+                        wp = "w"
+                    
+                    if week_fact == 0:
+                        wf = "w"
+                    elif week_fact == 1:
+                        wf = "y"
+                    elif week_fact == 2:
+                        wf = "gr"
+                    else:
+                        wf = "r"
+                    
+                    week_cols_mix[f'_{i}'] = f'{wp}_{wf}'
+
         except: #нету графика для этой операции
             for i in range(0,52):
-                week_cols[f"_{i+1}"]="white"
-        
+                week_cols_plan[f"_{i+1}"]="white"
+                week_cols_fact[f"_{i+1}"]="white"
+                week_cols_mix[f"_{i+1}"]="w_w"
+
+        if mode == 'plan':
+            week_cols = week_cols_plan
+        elif mode == 'fact':
+            week_cols = week_cols_fact
+        elif mode == 'mix':
+            week_cols = week_cols_mix
         full_eqp_list.append({**{"id" : work.id,
                               "loc": loc.name, 
                               "eqp": eqp.name, 
@@ -127,11 +155,16 @@ def cur_operations_list_update(request, week):
     start_cur_year = Q(start_date__gte=f'{cur_year-1}-12-25')
     finish_last_week = Q(finish_date__lt=start_cur_week_date)
     expired = Q(current_status=0)
-    #Запрашиваем все просроченныеопераии за все недели этого года, предшествующие текущей
-    last_operations=Scheduled_operations.objects.filter(start_cur_year & finish_last_week & expired) #Все пророченные работы по графику ППР, запланированные на предыдущие недели этого года
-    for op in last_operations:
+    #Запрашиваем все просроченные операии за все недели этого года, предшествующие текущей
+    expired_operations=Scheduled_operations.objects.filter(start_cur_year & finish_last_week & expired) #Все пророченные работы по графику ППР, запланированные на предыдущие недели этого года
+    for op in expired_operations:
         op.current_status = 3   #Если у операции стоит статус 0(ожидает выполнения), меняем статус на "просрочена"
         op.save()
+        sch_fact = Repair_schedule_fact.objects.get(operation_id=op.operation.id) 
+        op_year, op_week, op_day = op.start_date.isocalendar() #на какую неделю запланирована операция
+        if getattr(sch_fact, f'_{op_week}') != 3:
+            setattr(sch_fact, f'_{op_week}', 3) #меняем статус в фактическом графике ППР
+            sch_fact.save()
 
     operations = Repair_schedule.objects.all()
     for operation in operations: 
@@ -182,7 +215,7 @@ def cur_operations_list_update(request, week):
 
 
 @login_required
-def update_operation_status(request, sch_operation_id, status):
+def update_operation_status(request, sch_operation_id, week, status):
     '''Меняет статус выполнения запланированных операций'''
     staff = getRepairStaff_by_user(request.user)
     sch_op = Scheduled_operations.objects.get(id=sch_operation_id)
@@ -201,6 +234,11 @@ def update_operation_status(request, sch_operation_id, status):
         elapsed_time = round((datetime.datetime.now(timezone.utc) - sch_op.start_timestamp ).total_seconds()/60)
         sch_op.elapsed_time_min = elapsed_time
         sch_op.current_status = 2
+        sch_fact = Repair_schedule_fact.objects.get(operation_id=sch_op.operation.id) 
+        setattr(sch_fact, f'_{week}', 2) #меняем статус в фактическом графике ППР
+        sch_fact.save()
+
+
 
     sch_op.save()
     return HttpResponse(request)
