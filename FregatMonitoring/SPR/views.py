@@ -196,6 +196,8 @@ def cur_operations_list_update(request, week):
         except:
             staff = ""
         
+        start_ts = datetime.datetime.strftime(op.start_timestamp+datetime.timedelta(hours=3), "%d-%m-%Y %H:%M:%S") if op.start_timestamp is not None else None
+        finish_ts = datetime.datetime.strftime(op.finish_timestamp+datetime.timedelta(hours=3), "%d-%m-%Y %H:%M:%S") if op.finish_timestamp is not None else None
         full_eqp_list.append({"sch_op_id": op.id,
                               "id" : work.id,
                               "loc": loc.name, 
@@ -208,8 +210,8 @@ def cur_operations_list_update(request, week):
                               "work": work.operation_content,
                               "status" : op.current_status,
                               "comment": op.comment,
-                              "start_timestamp": op.start_timestamp,
-                              "finish_timestamp": op.finish_timestamp})
+                              "start_timestamp": start_ts,
+                              "finish_timestamp": finish_ts})
 
     return JsonResponse(full_eqp_list, safe=False)
 
@@ -219,29 +221,29 @@ def update_operation_status(request, sch_operation_id, week, status):
     '''Меняет статус выполнения запланированных операций'''
     staff = getRepairStaff_by_user(request.user)
     sch_op = Scheduled_operations.objects.get(id=sch_operation_id)
-    if status == 'start':
-        sch_op.start_timestamp = datetime.datetime.now(timezone.utc)
-        sch_op.staff = staff
-        sch_op.current_status = 1
-    elif status == 'cancel':
-        sch_op.start_timestamp = None
-        sch_op.finish_timestamp = None
-        sch_op.elapsed_time_min = None
-        sch_op.staff = None
-        sch_op.current_status = 0
-    elif status == 'finish':
-        sch_op.finish_timestamp = datetime.datetime.now(timezone.utc)
-        elapsed_time = round((datetime.datetime.now(timezone.utc) - sch_op.start_timestamp ).total_seconds()/60)
-        sch_op.elapsed_time_min = elapsed_time
-        sch_op.current_status = 2
-        sch_fact = Repair_schedule_fact.objects.get(operation_id=sch_op.operation.id) 
-        setattr(sch_fact, f'_{week}', 2) #меняем статус в фактическом графике ППР
-        sch_fact.save()
-
-
-
-    sch_op.save()
-    return HttpResponse(request)
+    if sch_op.staff==None or staff == sch_op.staff:
+        if status == 'start':
+            sch_op.start_timestamp = datetime.datetime.now(timezone.utc)
+            sch_op.staff = staff
+            sch_op.current_status = 1
+        elif status == 'cancel':
+            sch_op.start_timestamp = None
+            sch_op.finish_timestamp = None
+            sch_op.elapsed_time_min = None
+            sch_op.staff = None
+            sch_op.current_status = 0
+        elif status == 'finish':
+            sch_op.finish_timestamp = datetime.datetime.now(timezone.utc)
+            elapsed_time = round((datetime.datetime.now(timezone.utc) - sch_op.start_timestamp ).total_seconds()/60)
+            sch_op.elapsed_time_min = elapsed_time
+            sch_op.current_status = 2
+            sch_fact = Repair_schedule_fact.objects.get(operation_id=sch_op.operation.id) 
+            setattr(sch_fact, f'_{week}', 2) #меняем статус в фактическом графике ППР
+            sch_fact.save()
+        sch_op.save()
+        return HttpResponse("available")
+    
+    return HttpResponse(f"{sch_op.staff.name.split(' ')[0]} {sch_op.staff.surname.split(' ')[0]}")
 
 
 @login_required
@@ -281,3 +283,68 @@ def sch_repair_operations_editor(request, operation_id, field, data):
         
     op.save()
     return HttpResponse(request)
+
+
+@login_required
+def week_report_page(request):
+    '''Отображает страницу отчёта за предыдущую неделю'''
+    template = loader.get_template('SPR/week_report_page.html')
+    staff = getRepairStaff_by_user(request.user)
+
+    cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
+    start_last_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1+7)  
+    finish_last_week_date = start_last_week_date + datetime.timedelta(days = 6)
+
+    operations = Scheduled_operations.objects.filter(start_date=start_last_week_date)
+    op_scheduled = operations
+    op_completed = [op for op in operations if op.current_status==2]
+    elapsed_time = sum([op.elapsed_time_min for op in op_completed])
+    num_of_staff = len(set([op.staff for op in op_completed]))
+
+    context={'user_staff': staff,
+             'week': cur_week-1,
+             'start_date':  start_last_week_date.strftime('%d.%m.%Y'),
+             'finish_date': finish_last_week_date.strftime('%d.%m.%Y'),
+             'op_scheduled': len(op_scheduled),
+             'op_completed': len(op_completed),
+             'elapsed_time': elapsed_time,
+             'num_of_staff': num_of_staff
+            }
+    return HttpResponse(template.render(context, request))
+
+
+@login_required
+def uncompleted_list_update(request, week):
+    cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
+    delta_week = cur_week - int(week)
+    start_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1+(7*delta_week))  
+    operations = Scheduled_operations.objects.filter(start_date=start_week_date)
+    op_scheduled = operations
+    op_completed = [op for op in operations if op.current_status==2] #выполненные
+    elapsed_time = sum([op.elapsed_time_min for op in op_completed])
+    num_of_staff = len(set([op.staff for op in op_completed]))
+    context={'op_scheduled': len(op_scheduled),
+             'op_completed': len(op_completed),
+             'elapsed_time': elapsed_time,
+             'num_of_staff': num_of_staff
+            }
+    ops = [op for op in operations if op.current_status!=2] #просроченные
+    ops_list=[]
+    for op in ops:
+        work = op.operation
+        node = Nodes.objects.get(id=work.node.id)
+        sect = Sections.objects.get(id=node.section.id)
+        eqp = Equipment.objects.get(id=sect.equipment.id)
+        loc = Locations.objects.get(id=eqp.location.id)
+        ops_list.append({"sch_op_id": op.id,
+                        "id" : work.id,
+                        "loc": loc.name, 
+                        "eqp": eqp.name, 
+                        "sect": sect.name, 
+                        "node": node.name, 
+                        "work": work.operation_content,
+                        "status" : op.current_status,
+                        "comment": op.comment,
+                        })
+
+    return JsonResponse([ops_list, context], safe=False)

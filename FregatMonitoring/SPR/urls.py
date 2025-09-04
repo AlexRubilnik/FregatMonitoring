@@ -15,5 +15,7 @@ urlpatterns = [
     path("cur_operations_list_update/<week>/", views.cur_operations_list_update, name="cur_operations_list_update"),
     path("update_operation_status/<sch_operation_id>/<week>/<status>/", views.update_operation_status, name="update_operation_status"),
     path("repair_operations_editor/<operation_id>/<field>/<data>/", views.repair_operations_editor, name="repair_operations_editor"),
-    path("sch_repair_operations_editor/<operation_id>/<field>/<data>/", views.sch_repair_operations_editor, name="sch_repair_operations_editor")
+    path("sch_repair_operations_editor/<operation_id>/<field>/<data>/", views.sch_repair_operations_editor, name="sch_repair_operations_editor"),
+    path("week_report_page/", views.week_report_page, name="week_report_page"),
+    path("uncompleted_list_update/<week>/", views.uncompleted_list_update, name="uncompleted_list_update")
 ]
