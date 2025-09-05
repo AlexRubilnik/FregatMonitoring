@@ -1,5 +1,12 @@
 var marker_run = false;
 
+const windowInnerWidth = document.documentElement.clientWidth
+const windowInnerHeight = document.documentElement.clientHeight
+table = document.getElementById("cur-operations-table")
+table.style.maxWidth = String(windowInnerWidth)+"px"
+table.style.maxHeight =String( windowInnerHeight-250)+"px"
+
+
 cur_staff = document.getElementById("user_position").innerText; //должность пользователя
 cur_staff_=cur_staff.replaceAll(' ', '').replaceAll('\n', '') //без пробелов
 
@@ -354,6 +361,7 @@ function RenderLog(TableData){
   }
   
   var table = new Tabulator("#cur-operations-table", {
+  layout:window.innerWidth > 800 ? "fitColumns" : "fitData",
   placeholder:"Нет данных",
   data: table_data,
   title:"Перечень оборудования",

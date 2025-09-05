@@ -295,10 +295,34 @@ def week_report_page(request):
     start_last_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1+7)  
     finish_last_week_date = start_last_week_date + datetime.timedelta(days = 6)
 
+    def calculation_elapsed_time(op_completed):
+        staff_dict = dict()
+        elapsed_time = 0
+        for op in op_completed: #сортируем операции в словарь по сотрудникам, выполнявшим операции
+            if op.staff not in staff_dict:
+                staff_dict[op.staff] = [op, ]
+            else:
+                staff_dict[op.staff].append(op)
+        for k, user_op_completed in staff_dict.items():
+            elapsed_time_dict = dict()
+            for op in user_op_completed: #сортируем операции в словарь. Операции с одновременным началом попадают в список под один ключ словаря
+                new_key = True
+                for op_in_dict in elapsed_time_dict.keys():
+                    if abs(op_in_dict - op.start_timestamp) < datetime.timedelta(minutes = 2): #если среди операций уже есть операция с таким же временем начала
+                        elapsed_time_dict[op_in_dict].append(op)#добавляем операции с одновременным началом под один ключ
+                        new_key=False
+                        break
+                if new_key:
+                    elapsed_time_dict[op.start_timestamp]=[op,]
+            for k, ops in elapsed_time_dict.items():
+                elapsed_time += max([op.elapsed_time_min for op in ops]) 
+
+        return elapsed_time
+
     operations = Scheduled_operations.objects.filter(start_date=start_last_week_date)
     op_scheduled = operations
     op_completed = [op for op in operations if op.current_status==2]
-    elapsed_time = sum([op.elapsed_time_min for op in op_completed])
+    elapsed_time = calculation_elapsed_time(op_completed) #sum([op.elapsed_time_min for op in op_completed])
     num_of_staff = len(set([op.staff for op in op_completed]))
 
     context={'user_staff': staff,
@@ -307,7 +331,8 @@ def week_report_page(request):
              'finish_date': finish_last_week_date.strftime('%d.%m.%Y'),
              'op_scheduled': len(op_scheduled),
              'op_completed': len(op_completed),
-             'elapsed_time': elapsed_time,
+             'elapsed_time': f'{elapsed_time//60} ч. {elapsed_time%60} мин.',
+             'elapsed_time_avg': f'{round(elapsed_time/num_of_staff)//60} ч. {round(elapsed_time/num_of_staff)%60} мин.' if num_of_staff!=0 else '0 мин.',
              'num_of_staff': num_of_staff
             }
     return HttpResponse(template.render(context, request))
@@ -317,25 +342,56 @@ def week_report_page(request):
 def uncompleted_list_update(request, week):
     cur_year, cur_week, cur_day = datetime.datetime.now().isocalendar()  #return tuple(year, week, weekday)
     delta_week = cur_week - int(week)
-    start_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1+(7*delta_week))  
+    start_week_date = datetime.datetime.now() - datetime.timedelta(days = cur_day-1+(7*delta_week)) 
+
+    def calculation_elapsed_time(op_completed):
+        staff_dict = dict()
+        elapsed_time = 0
+        for op in op_completed: #сортируем операции в словарь по сотрудникам, выполнявшим операции
+            if op.staff not in staff_dict:
+                staff_dict[op.staff] = [op, ]
+            else:
+                staff_dict[op.staff].append(op)
+        for k, user_op_completed in staff_dict.items():
+            elapsed_time_dict = dict()
+            for op in user_op_completed: #сортируем операции в словарь. Операции с одновременным началом попадают в список под один ключ словаря
+                new_key = True
+                for op_in_dict in elapsed_time_dict.keys():
+                    if abs(op_in_dict - op.start_timestamp) < datetime.timedelta(minutes = 2): #если среди операций уже есть операция с таким же временем начала
+                        elapsed_time_dict[op_in_dict].append(op)#добавляем операции с одновременным началом под один ключ
+                        new_key=False
+                        break
+                if new_key:
+                    elapsed_time_dict[op.start_timestamp]=[op,]
+            for k, ops in elapsed_time_dict.items():
+                elapsed_time += max([op.elapsed_time_min for op in ops]) 
+
+        return elapsed_time
+         
     operations = Scheduled_operations.objects.filter(start_date=start_week_date)
     op_scheduled = operations
     op_completed = [op for op in operations if op.current_status==2] #выполненные
-    elapsed_time = sum([op.elapsed_time_min for op in op_completed])
+    elapsed_time = calculation_elapsed_time(op_completed) #sum([op.elapsed_time_min for op in op_completed])  
     num_of_staff = len(set([op.staff for op in op_completed]))
     context={'op_scheduled': len(op_scheduled),
              'op_completed': len(op_completed),
-             'elapsed_time': elapsed_time,
+             'elapsed_time': f'{elapsed_time//60} ч. {elapsed_time%60} мин.',
+             'elapsed_time_avg': f'{round(elapsed_time/num_of_staff)//60} ч. {round(elapsed_time/num_of_staff)%60} мин.' if num_of_staff!=0 else '0 мин.',
              'num_of_staff': num_of_staff
             }
     ops = [op for op in operations if op.current_status!=2] #просроченные
     ops_list=[]
     for op in ops:
+        try:
+            staff = op.staff.name+" "+op.staff.surname
+        except:
+            staff = ""
         work = op.operation
         node = Nodes.objects.get(id=work.node.id)
         sect = Sections.objects.get(id=node.section.id)
         eqp = Equipment.objects.get(id=sect.equipment.id)
         loc = Locations.objects.get(id=eqp.location.id)
+        start_ts = datetime.datetime.strftime(op.start_timestamp+datetime.timedelta(hours=3), "%d-%m-%Y %H:%M:%S") if op.start_timestamp is not None else None
         ops_list.append({"sch_op_id": op.id,
                         "id" : work.id,
                         "loc": loc.name, 
@@ -343,7 +399,9 @@ def uncompleted_list_update(request, week):
                         "sect": sect.name, 
                         "node": node.name, 
                         "work": work.operation_content,
+                        "staff": staff,
                         "status" : op.current_status,
+                        "start_timestamp": start_ts,
                         "comment": op.comment,
                         })
 

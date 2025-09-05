@@ -95,6 +95,7 @@ function uncompleted_list_update(){
       document.getElementById("op_scheduled").innerHTML = data[1].op_scheduled
       document.getElementById("op_completed").innerHTML = data[1].op_completed
       document.getElementById("elapsed_time").innerHTML = data[1].elapsed_time
+      document.getElementById("elapsed_time_avg").innerHTML = data[1].elapsed_time_avg
       document.getElementById("num_of_staff").innerHTML = data[1].num_of_staff
       marker_run=false; //Останавливаем бегущий маркер
       data_download_marker_on_off(true); //Скрываем маркер "Подождите. Идёт загрузка данных..."
