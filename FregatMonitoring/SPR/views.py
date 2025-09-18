@@ -36,6 +36,8 @@ def index(request):
         return cur_operations_page(request)
     elif staff.position.name.split('  ')[0] in('Зам. тех директора по АСУиИТ',):
         return full_operations_page(request)
+    elif staff.position.name.split('  ')[0] in('Технический директор',):
+        return equipment_page(request)
 
 
 @login_required
