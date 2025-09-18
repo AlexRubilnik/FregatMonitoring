@@ -22,4 +22,5 @@ urlpatterns = [
     path('FregatMonitoringApp/', include('FregatMonitoringApp.urls')),
     path('SPR/', include('SPR.urls')),
     path('admin/', admin.site.urls),
+    path('chaining/', include('smart_selects.urls')),
 ]

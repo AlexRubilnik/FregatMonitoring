@@ -1,0 +1,12 @@
+{% block location_form %}
+        <select list="locs" align="right" id="location" name="location" onchange="equipment_list_update()">
+        <option disabled selected value> -- выберите участок -- </option>
+            {% for loc in locs_list %}
+               {% if loc.0 == loc_selected %}
+                <option value="{{ loc.0 }}" selected> {{ loc.1 }} </option>
+               {% else %}
+                <option value="{{ loc.0 }}">{{ loc.1 }} </option>
+               {% endif %}
+            {% endfor %}
+        </select>
+{% endblock %}

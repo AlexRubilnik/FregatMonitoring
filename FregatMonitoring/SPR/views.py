@@ -406,3 +406,96 @@ def uncompleted_list_update(request, week):
                         })
 
     return JsonResponse([ops_list, context], safe=False)
+
+
+@login_required
+def equipment_page(request):
+    template = loader.get_template('SPR/equipment_page.html')
+    locs_list = Locations.objects.all()
+    locs_list = [(loc.id, loc.name) for loc in locs_list]
+      
+    if "location" in request.GET:
+        eqps_list = Equipment.objects.filter(location=request.GET["location"]) 
+        eqps_list = [(eqp.id, eqp.name) for eqp in eqps_list]  
+        context = {'eqps_list': eqps_list,}
+        template = loader.get_template('SPR/equipment_form.html')      
+        return HttpResponse(template.render(context, request))     
+    if "equipment" in request.GET: 
+        sects_list = Sections.objects.filter(equipment=request.GET["equipment"])           
+        sects_list = [(sect.id, sect.name) for sect in sects_list]
+        context = {'sects_list': sects_list,}
+        template = loader.get_template('SPR/section_form.html') 
+        return HttpResponse(template.render(context, request))
+    if "section" in request.GET:
+        nodes_list = Nodes.objects.filter(section=request.GET["section"])   
+        nodes_list = [(node.id, node.name) for node in nodes_list] 
+        context = {'nodes_list': nodes_list,}
+        template = loader.get_template('SPR/node_form.html') 
+        return HttpResponse(template.render(context, request))     
+    else:
+        context={'locs_list': locs_list,}
+
+    return HttpResponse(template.render(context, request))
+
+
+@login_required
+def last_operations_list(request, loc, eqp, sect, node):
+    op_list = []
+    works_list=[]
+
+    if node not in ("0", "-1"):
+        works_list = Works.objects.filter(node=int(node))
+    else:
+        if sect not in ("0", "-1"):
+            nodes = Nodes.objects.filter(section=int(sect))
+            works_list = Works.objects.filter(node__in=nodes)
+        else:
+            if eqp not in ("0", "-1"):
+                sections = Sections.objects.filter(equipment=int(eqp))
+                nodes = Nodes.objects.filter(section__in=sections)
+                works_list = Works.objects.filter(node__in=nodes)
+            else:
+                if loc not in ("0", "-1"):
+                    equipments = Equipment.objects.filter(location = int(loc))
+                    sections = Sections.objects.filter(equipment__in=equipments)
+                    nodes = Nodes.objects.filter(section__in=sections)
+                    works_list = Works.objects.filter(node__in=nodes)
+
+
+    if len(works_list) > 0:
+        works = Q(operation__in=works_list)
+        completed = Q(current_status=2)
+        op_list = Scheduled_operations.objects.filter(works & completed)
+
+    operations_list = []
+    for op in op_list:
+        work = op.operation
+        node = Nodes.objects.get(id=work.node.id)
+        sect = Sections.objects.get(id=node.section.id)
+        eqp = Equipment.objects.get(id=sect.equipment.id)
+        loc = Locations.objects.get(id=eqp.location.id)
+        staff_pos = Staff_positions.objects.get(id=work.staff_position.id)
+        try:
+            staff = op.staff.name.split(' ')[0]+" "+op.staff.surname.split(' ')[0]
+        except:
+            staff = ""
+        
+        start_ts = datetime.datetime.strftime(op.start_timestamp+datetime.timedelta(hours=3), "%d-%m-%Y %H:%M:%S") if op.start_timestamp is not None else None
+        finish_ts = datetime.datetime.strftime(op.finish_timestamp+datetime.timedelta(hours=3), "%d-%m-%Y %H:%M:%S") if op.finish_timestamp is not None else None
+        operations_list.append({"sch_op_id": op.id,
+                        "id" : work.id,
+                        "loc": loc.name, 
+                        "eqp": eqp.name, 
+                        "sect": sect.name, 
+                        "node": node.name, 
+                        "staff_pos": staff_pos.name,
+                        "staff": staff,
+                        "tools": work.tools,
+                        "work": work.operation_content,
+                        "status" : op.current_status,
+                        "comment": op.comment,
+                        "start_timestamp": start_ts,
+                        "finish_timestamp": finish_ts,
+                        "elapsed_time":op.elapsed_time_min})    
+
+    return JsonResponse(operations_list, safe=False)

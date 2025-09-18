@@ -1,4 +1,5 @@
 from django.db import models
+from smart_selects.db_fields import ChainedForeignKey
 
 class Locations(models.Model): #Производственный участок
     id = models.AutoField(primary_key=True)

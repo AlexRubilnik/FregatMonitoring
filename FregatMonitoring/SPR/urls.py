@@ -17,5 +17,7 @@ urlpatterns = [
     path("repair_operations_editor/<operation_id>/<field>/<data>/", views.repair_operations_editor, name="repair_operations_editor"),
     path("sch_repair_operations_editor/<operation_id>/<field>/<data>/", views.sch_repair_operations_editor, name="sch_repair_operations_editor"),
     path("week_report_page/", views.week_report_page, name="week_report_page"),
-    path("uncompleted_list_update/<week>/", views.uncompleted_list_update, name="uncompleted_list_update")
+    path("uncompleted_list_update/<week>/", views.uncompleted_list_update, name="uncompleted_list_update"),
+    path("equipment_page/", views.equipment_page, name="equipment_page"),
+    path("last_operations_list/<loc>/<eqp>/<sect>/<node>/", views.last_operations_list, name="last_operations_list")
 ]
