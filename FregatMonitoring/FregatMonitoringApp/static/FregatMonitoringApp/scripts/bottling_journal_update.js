@@ -146,5 +146,22 @@ function RenderLog(TableData){
               {title:"Вес", field:"weight", hozAlign:"center", width:130},
           ],
   });
+
+  //trigger download of data.csv file
+  document.getElementById("download-csv").addEventListener(
+  'click', 
+  function(){
+      table.download("csv", "data.csv");
+  }, 
+  false);
+
+  //trigger download of data.xlsx file
+  document.getElementById("download-xlsx").addEventListener(
+  'click', 
+  function(){
+      table.download("xlsx", "data.xlsx", {sheetName:"Розлив готовой продукции"});
+  }, 
+  false);
+
   return table
 } //RenderTable
