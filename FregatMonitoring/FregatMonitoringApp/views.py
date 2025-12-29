@@ -690,13 +690,16 @@ def bottling_journal_data(request):
     journal_entrys = list()
     for i in range(len(list(journal))):
         entry = journal[i]
+        weight = entry.weight[:-3]
+        if(weight[0]=='0'):
+            weight = weight[1:]
         if entry.grade != None:   
             journal_entrys.append({
                 "grade":entry.grade,
                 "lot":entry.lot,
                 "data":entry.proddate,
                 "bundle":entry.bundle,
-                "weight":entry.weight
+                "weight":weight
             })
         
     return JsonResponse(journal_entrys, safe=False)
