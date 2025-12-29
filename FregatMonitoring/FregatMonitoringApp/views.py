@@ -690,9 +690,12 @@ def bottling_journal_data(request):
     journal_entrys = list()
     for i in range(len(list(journal))):
         entry = journal[i]
-        weight = entry.weight[:-3]
-        if(weight[0]=='0'):
-            weight = weight[1:]
+        try:
+            weight = entry.weight[:-3]
+            if(weight[0]=='0'):
+                weight = weight[1:]
+        except:
+            weight = entry.weight
         if entry.grade != None:   
             journal_entrys.append({
                 "grade":entry.grade,
