@@ -21,7 +21,7 @@ class MyLoginView(LoginView):
     redirect_authenticated_user = True
     
     def get_success_url(self):
-        return reverse_lazy('SPR:index') 
+        return reverse_lazy('FregatMonitoring:index') 
     
     def form_invalid(self, form):
         messages.error(self.request,'Неправильное имя пользователя или пароль!')
@@ -37,7 +37,7 @@ def index(request):
     elif staff.position.name.split('  ')[0] in('Зам. тех директора по АСУиИТ',):
         return full_operations_page(request)
     elif staff.position.name.split('  ')[0] in('Технический директор',):
-        return equipment_page(request)
+        return equipment_journal_page(request)
 
 
 @login_required
@@ -249,29 +249,118 @@ def update_operation_status(request, sch_operation_id, week, status):
 
 
 @login_required
+def add_new_repair_operation_to_bd(request):
+    try:
+        node = Nodes.objects.get(id=request.GET["node"])
+        staff_pos = Staff_positions.objects.get(id=request.GET["staff_position"])
+        new_work = Works()
+        new_work.node = node
+        new_work.operation_content = request.GET["op_content"]
+        new_work.tools = request.GET["op_tool"]
+        new_work.staff_position = staff_pos
+        new_work.periodicity_days = request.GET["op_per"]
+        new_work.risk = request.GET["risk"]
+        new_work.save()
+        return HttpResponse("saved_sucsessfuly")
+    except:
+        return HttpResponse("error")
+
+
+@login_required
+def delete_repair_operation_from_db(request, op_id):
+    try:
+        op = Works.objects.get(id=op_id)
+        op.delete()
+        return HttpResponse('deleted_sucsessfuly')
+    except:
+        return HttpResponse('error')
+
+
+@login_required
+def add_new_entity_to_bd(request):
+    try:
+        if request.GET["col_name"] == "loc":
+            ent = Locations()
+        elif request.GET["col_name"] == "eqp":
+            ent = Equipment()
+            loc = Locations.objects.get(id = request.GET["parent_id"])
+            ent.location = loc
+        elif request.GET["col_name"] == "sect":
+            ent = Sections()
+            eqp = Equipment.objects.get(id = request.GET["parent_id"])
+            ent.equipment = eqp
+        elif request.GET["col_name"] == "node":
+            ent = Nodes()
+            sect = Sections.objects.get(id = request.GET["parent_id"])
+            ent.section = sect
+        
+        ent.name = request.GET["entity_name"]
+        ent.save()
+        return HttpResponse("saved_sucsessfuly")
+    except:
+        return HttpResponse("error")
+
+
+@login_required
+def delete_entity_from_db(request, entity_type_str, ent_id):
+    try:
+        if entity_type_str == 'loc':
+            ent = Locations.objects.get(id=ent_id)
+            ent_childs = Equipment.objects.filter(location=ent)
+            if len(ent_childs) > 0:
+                return HttpResponse('Ошибка! Удалите сначала всё оборудование на этом участке!')
+        elif entity_type_str == 'eqp':
+            ent = Equipment.objects.get(id=ent_id)
+            ent_childs = Sections.objects.filter(equipment=ent)
+            if len(ent_childs) > 0:
+                return HttpResponse('Ошибка! Удалите сначала все разделы с этого оборудования!')
+        elif entity_type_str == 'sect':
+            ent = Sections.objects.get(id=ent_id)
+            ent_childs = Nodes.objects.filter(section=ent)
+            if len(ent_childs) > 0:
+                return HttpResponse('Ошибка! Удалите сначала все узлы этого раздела!')
+        elif entity_type_str == 'node':
+            ent = Nodes.objects.get(id=ent_id)
+            ent_childs = Works.objects.filter(node=ent)
+            if len(ent_childs) > 0:
+                return HttpResponse('Ошибка! Удалите сначала все операции на этом узле!')
+        ent.delete()
+        return HttpResponse('deleted_sucsessfuly')
+    except:
+        return HttpResponse('error')
+
+
+@login_required
 def repair_operations_editor(request, operation_id, field, data):
     '''Получает и пишет в БД изменения в графике ППР'''
     op = Works.objects.get(id=operation_id)
     if field == 'risk':
         op.risk = data
     if field == 'per':
-        op = Works.objects.get(id=operation_id)
         op.periodicity_days = data
     if field == 'tools':
-        op = Works.objects.get(id=operation_id)
-        op.tools = data
+        op.tools = data if data != 'None' else ''
     if field == 'work':
-        op = Works.objects.get(id=operation_id)
         op.operation_content = data
     if field[0] == '_':
         try:
-            op = Repair_schedule.objects.get(operation=op)
+            op_ = Repair_schedule.objects.get(operation=op)
         except:
-            op = Repair_schedule(operation=op)
+            op_ = Repair_schedule(operation=op)
+
+        try: #проверяем, что существует фактический график
+            op_fact = Repair_schedule_fact.objects.get(operation=op)
+        except:
+            op_fact = Repair_schedule_fact(operation=op)
+            
         if data == 'white':
-            exec(f'op.{field} = 0')
+            exec(f'op_.{field} = 0')
+            exec(f'op_fact.{field} = 0')
         elif data == 'yellow':
-            exec(f'op.{field} = 1')
+            exec(f'op_.{field} = 1')
+            exec(f'op_fact.{field} = 1')
+        op_.save()
+        op_fact.save()
     op.save()
     return HttpResponse(request)
 
@@ -411,17 +500,30 @@ def uncompleted_list_update(request, week):
 
 
 @login_required
-def equipment_page(request):
-    template = loader.get_template('SPR/equipment_page.html')
+def equipment_journal_page(request):
+    template = loader.get_template('SPR/equipment_journal_page.html')
+    return equipment_page(request,template)
+
+@login_required
+def equipment_service_page(request):
+    template = loader.get_template('SPR/equipment_service_page.html')
+    return equipment_page(request,template)
+
+
+@login_required
+def equipment_page(request, template):
     locs_list = Locations.objects.all()
     locs_list = [(loc.id, loc.name) for loc in locs_list]
       
-    if "location" in request.GET:
+    if "location" in request.GET and request.GET["location"]!="":
         eqps_list = Equipment.objects.filter(location=request.GET["location"]) 
         eqps_list = [(eqp.id, eqp.name) for eqp in eqps_list]  
         context = {'eqps_list': eqps_list,}
         template = loader.get_template('SPR/equipment_form.html')      
         return HttpResponse(template.render(context, request))     
+    elif "location" in request.GET and request.GET["location"]=="": #когда участок не выбрали, нужно вернуть список всех участков
+        context = {'locs_list': locs_list,}
+        return HttpResponse()
     if "equipment" in request.GET: 
         sects_list = Sections.objects.filter(equipment=request.GET["equipment"])           
         sects_list = [(sect.id, sect.name) for sect in sects_list]
@@ -433,7 +535,23 @@ def equipment_page(request):
         nodes_list = [(node.id, node.name) for node in nodes_list] 
         context = {'nodes_list': nodes_list,}
         template = loader.get_template('SPR/node_form.html') 
-        return HttpResponse(template.render(context, request))     
+        return HttpResponse(template.render(context, request))    
+    if "new_operation" in request.GET:
+        user_position = Repair_staff.objects.filter(username=request.user)[0].position #должность пользователя(объект Staff_positions)
+        user_service = user_position.service.id #служба пользователя(id)
+        service_positions = Staff_positions.objects.filter(service=user_service) #должности, входящие в эту службу
+        serv_pos_list = [(pos.id, pos.name) for pos in service_positions]
+        print(serv_pos_list)
+        context = {'staff_pos_list': serv_pos_list,}
+        template = loader.get_template('SPR/new_operation_form.html') 
+        return HttpResponse(template.render(context, request)) 
+    if "new_entity" in request.GET:
+        template = loader.get_template('SPR/new_entity_form.html') 
+        context = {
+            'col_name': request.GET['col_name'], 
+            'new_str_name': request.GET['new_str_name']
+        }
+        return HttpResponse(template.render(context, request)) 
     else:
         context={'locs_list': locs_list,}
 
@@ -501,3 +619,95 @@ def last_operations_list(request, loc, eqp, sect, node):
                         "elapsed_time":op.elapsed_time_min})    
 
     return JsonResponse(operations_list, safe=False)
+
+
+@login_required
+def update_equipment_tree(request, loc, eqp, sect, node):
+    composition = []
+    if node not in ("0", "-1"):
+        works_list = Works.objects.filter(node=int(node))
+        if len(works_list) == 0:
+            composition.append({"work_content": ""}) 
+        for work in works_list:
+            staff_pos = Staff_positions.objects.get(id=work.staff_position.id)
+            week_cols_plan=dict()
+            week_cols_fact=dict()
+            try:
+                weeks_plan = Repair_schedule.objects.get(operation=work) 
+                weeks_fact = Repair_schedule_fact.objects.get(operation=work) 
+                for i in range(1, 53): 
+                    week_plan = getattr(weeks_plan, f'_{i}')
+                    week_fact = getattr(weeks_fact, f'_{i}')
+                    if  week_plan == 1:
+                        week_cols_plan[f'_{i}'] = 'yellow'
+                    else:
+                        week_cols_plan[f'_{i}'] = 'white'
+                    
+                    if week_fact == 0:
+                        week_cols_fact[f'__{i}'] = "white"
+                    elif week_fact == 1:
+                        week_cols_fact[f'__{i}'] = "yellow"
+                    elif week_fact == 2:
+                        week_cols_fact[f'__{i}'] = "green"
+                    else:
+                        week_cols_fact[f'__{i}'] = "red"
+
+            except: #нету графика для этой операции
+                for i in range(0,52):
+                    week_cols_plan[f"_{i+1}"]="white"
+                    week_cols_fact[f"__{i+1}"]="white"
+
+            composition.append({**{"id": work.id,
+            "work_content": work.operation_content,
+            "tools": work.tools,
+            "staff_pos": staff_pos.name,
+            "per_days": work.periodicity_days,
+            "risk": work.risk,
+            }, **week_cols_plan, **week_cols_fact})
+        staff = getRepairStaff_by_user(request.user)
+        user_position = staff.position
+        user_service = user_position.service.id #служба пользователя(id)
+        service_positions = Staff_positions.objects.filter(service=user_service) #должности, входящие в эту службу
+        service_works = Works.objects.filter(staff_position__in = service_positions) #операции, которые выполняет эта служба
+        week_cols_sum = dict()
+        for i in range(1, 53):
+            week_cols_sum[f'_{i}']=0
+        schedues = Repair_schedule.objects.filter(operation__in=service_works) 
+        for work_sch in schedues: #считаем количество операций на каждой неделе
+            for i in range(1, 53):
+                try: 
+                    week_plan = getattr(work_sch, f'_{i}')
+                    if week_plan==1:
+                        week_cols_sum[f'_{i}']+=1
+                except:
+                    pass
+        composition.append({**{"work_content": "Общее количество операций"}, **week_cols_sum})
+    else:
+        if sect not in ("0", "-1"):
+            nodes = Nodes.objects.filter(section=int(sect))
+            if len(nodes) == 0:
+                        composition.append({"node_name": ""}) 
+            for node in nodes:
+                composition.append({"node_name": node.name, "id": node.id})
+        else:
+            if eqp not in ("0", "-1"):
+                sections = Sections.objects.filter(equipment=int(eqp))
+                if len(sections) == 0:
+                        composition.append({"sect_name": ""}) 
+                for sect in sections:
+                    composition.append({"sect_name": sect.name, "id": sect.id})
+            else:
+                if loc not in ("0", "-1"):
+                    equipments = Equipment.objects.filter(location = int(loc))
+                    if len(equipments) == 0:
+                        composition.append({"eqp_name": ""}) 
+                    for eqp in equipments:
+                        composition.append({"eqp_name": eqp.name, "id": eqp.id}) 
+                elif loc=="0":
+                    locals = Locations.objects.all()
+                    if len(locals) == 0:
+                        composition.append({"loc_name": ""}) 
+                    for loc in locals:
+                        composition.append({"loc_name": loc.name, "id": loc.id}) 
+
+    return JsonResponse(composition, safe=False)

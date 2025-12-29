@@ -1,5 +1,5 @@
 <select list="nodes" align="right" id="node" name="node" onchange="last_operations_list_update()">
-<option disabled selected value> -- выберите узел -- </option>
+<option selected value> -- выберите узел -- </option>
     {% for node in nodes_list %}
       {% if node.0 == node_selected %}
         <option value="{{ node.0 }}" selected> {{ node.1 }} </option>

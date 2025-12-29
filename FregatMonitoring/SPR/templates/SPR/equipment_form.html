@@ -1,5 +1,5 @@
 <select list="eqps" align="right" id="equipment" name="equipment" onchange="sections_list_update()">
-<option disabled selected value> -- выберите оборудование -- </option>
+<option selected value> -- выберите оборудование -- </option>
     {% for eqp in eqps_list %}
         <option value="{{ eqp.0 }}"> {{ eqp.1 }} </option>
     {% endfor %}

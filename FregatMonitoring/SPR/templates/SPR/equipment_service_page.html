@@ -9,7 +9,7 @@
 
 {% block cur_operations_page %}
 <div class="content-box">
-  <div style="text-align: left"> <h2>Журнал обслуживания оборудования</h2> </div> 
+  <div style="text-align: left"> <h2>Планирование обслуживания оборудования</h2> </div> 
   <div style="text-align: left">  
     <div class="locations_filters">Участок: 
     {% include "SPR/location_form.html" %} 
@@ -23,9 +23,15 @@
   </div> 
   <div style="text-align: left; padding-top: 30px;"><span id="data-download-marker" hidden=true> Подождите. Идёт загрузка данных </span><span id="ddm1" hidden=true>.</span><span id="ddm2" hidden=true>.</span><span id="ddm3" hidden=true>.</span></div>
   <div id="equipment-operations-block" style="position: absolute; padding-top: 30px;"> 
-      <div id="equipment-operations-table" style="max-height: 750px; max-width: 1850 px;"></div>
-  </div>  
-  <script src="{% static 'SPR/scripts/equipment_operations_table.js' %}"> </script>
+      <div style="display:grid; margin-bottom:20px" id="add_entity_to_bd">
+        
+      </div>
+      <div id="equipment-tree-table" style="max-height: 750px; max-width: 1700 px;"></div>
+       <div id="new_entity_form"></div> 
+      <div id="new_operation_form"></div> 
+  </div>
+  
+  <script src="{% static 'SPR/scripts/equipment_schedule_edit.js' %}"> </script>
 </div>
 {% endblock %}
 

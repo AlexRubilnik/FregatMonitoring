@@ -8,7 +8,7 @@ table.style.maxHeight =String( windowInnerHeight-250)+"px"
 
 function equipment_list_update(){ 
   let loc = document.getElementById('location').value; 
-  let url = new URL("/SPR/equipment_page/", window.location.origin);
+  let url = new URL("/SPR/equipment_journal_page/", window.location.origin);
   url.searchParams.set('location', String(loc));    
   var XHR = new XMLHttpRequest()
   XHR.open('GET', url, true);
@@ -35,7 +35,7 @@ function equipment_list_update(){
 
 function sections_list_update(){ 
   let eqp = document.getElementById('equipment').value; 
-  let url = new URL("/SPR/equipment_page/", window.location.origin);
+  let url = new URL("/SPR/equipment_journal_page/", window.location.origin);
   url.searchParams.set('equipment', String(eqp));    
   var XHR = new XMLHttpRequest()
   XHR.open('GET', url, true);
@@ -57,7 +57,7 @@ function sections_list_update(){
 
 function nodes_list_update(){ 
   let sect = document.getElementById('section').value; 
-  let url = new URL("/SPR/equipment_page/", window.location.origin);
+  let url = new URL("/SPR/equipment_journal_page/", window.location.origin);
   url.searchParams.set('section', String(sect));    
   var XHR = new XMLHttpRequest()
   XHR.open('GET', url, true);

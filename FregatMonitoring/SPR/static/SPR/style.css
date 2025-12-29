@@ -230,6 +230,10 @@
     width: 50 px;
 }
 
+#new_operation_form{
+    text-align: left;
+}
+
 .melts_log_filters,
 .furerr_log_filters,
 .bottling_filters{
@@ -238,6 +242,17 @@
     max-width: 150px;
     text-align: right;
     margin-right: 10px;
+}
+
+#op_content{
+    width: 1000px;
+    height: 100px;
+}
+
+#op_tool{
+    width: 1000px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .orange-text{
@@ -359,7 +374,9 @@
 .btn,
 #work_start_btn,
 #week_minus,
-#week_plus{
+#week_plus,
+#add_entity_to_bd,
+#save_entity_to_bd{
     border-radius: 4px;
     background-color: #696969;
     color: rgb(255, 255, 255);

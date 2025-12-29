@@ -1,5 +1,5 @@
 <select list="sects" align="right" id="section" name="section" onchange="nodes_list_update()">
-<option disabled selected value> -- выберите раздел -- </option>
+<option selected value> -- выберите раздел -- </option>
     {% for sect in sects_list %}
       {% if sect.0 == sect_selected %}
         <option value="{{ sect.0 }}" selected> {{ sect.1 }} </option>

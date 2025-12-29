@@ -18,6 +18,12 @@ urlpatterns = [
     path("sch_repair_operations_editor/<operation_id>/<field>/<data>/", views.sch_repair_operations_editor, name="sch_repair_operations_editor"),
     path("week_report_page/", views.week_report_page, name="week_report_page"),
     path("uncompleted_list_update/<week>/", views.uncompleted_list_update, name="uncompleted_list_update"),
-    path("equipment_page/", views.equipment_page, name="equipment_page"),
-    path("last_operations_list/<loc>/<eqp>/<sect>/<node>/", views.last_operations_list, name="last_operations_list")
+    path("equipment_journal_page/", views.equipment_journal_page, name="equipment_journal_page"),
+    path("equipment_service_page/", views.equipment_service_page, name="equipment_service_page"),
+    path("update_equipment_tree/<loc>/<eqp>/<sect>/<node>/",views.update_equipment_tree, name="update_equipment_tree"),
+    path("last_operations_list/<loc>/<eqp>/<sect>/<node>/", views.last_operations_list, name="last_operations_list"),
+    path("add_new_repair_operation_to_bd/", views.add_new_repair_operation_to_bd, name="add_new_repair_operation_to_bd"),
+    path("delete_repair_operation_from_bd/<op_id>/", views.delete_repair_operation_from_db, name="delete_repair_operation_from_db"),
+    path("add_new_entity_to_bd/", views.add_new_entity_to_bd, name="add_new_entity_to_bd"),
+    path("delete_entity_from_db/<entity_type_str>/<ent_id>/", views.delete_entity_from_db, name="delete_entity_from_db"),
 ]

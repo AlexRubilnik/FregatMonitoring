@@ -1,0 +1,26 @@
+
+<div style="margin-top: 50px;"> <p><b>Новая операция</b></p>
+    <label for="op_content">Содержание работы: </label>
+    <textarea id="op_content" wrap="sort" name="op_content" value=""></textarea> </br>
+    <label style="margin-right: 54px; margin-top:10px;"; for="op_tool">Инструмент:</label>
+    <input id="op_tool" type="text" name="op_tool" value=""></br>
+    <label for="staff_position" style="margin-right: 48px;">Исполнитель: </label>
+    <select style="margin-right: 40px;" list="staff_positions_list" align="right" id="staff_position" name="staff_position">
+        <option disabled selected value> -- выберите должность -- </option>
+        {% for staff_pos in staff_pos_list %}
+            <option value="{{ staff_pos.0 }}"> {{ staff_pos.1 }} </option>
+        {% endfor %}
+    </select>
+    <label for="op_per">Периодичность(дн.): </label>
+    <input style="margin-right: 40px;" id="op_per" type="number" min="1" max="365" name="op_per" value="">
+    <label for="risk">Риск: </label>
+    <select align="right" id="risk" name="risk">
+        <option disabled selected value> -- риск при невыполнении -- </option>
+        <option value="Низкий"> Низкий </option>
+        <option value="Средний"> Средний </option>
+        <option value="Высокий"> Высокий </option>
+    </select>
+    <div style="display:flow; margin-bottom:20px">
+        <btn id="save_entity_to_bd" onclick="save_new_work_to_bd()">Сохранить</btn>
+    </div>
+</div>
